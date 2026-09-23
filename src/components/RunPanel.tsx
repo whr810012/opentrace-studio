@@ -13,6 +13,12 @@ import {
 const PRESETS: { id: string; label: string; baseUrl: string; model: string }[] = [
   { id: 'deepseek', label: 'DeepSeek', baseUrl: 'https://api.deepseek.com', model: 'deepseek-chat' },
   { id: 'openai', label: 'OpenAI', baseUrl: 'https://api.openai.com', model: 'gpt-4o-mini' },
+  {
+    id: 'ark',
+    label: '火山方舟',
+    baseUrl: 'https://ark.cn-beijing.volces.com/api/v3',
+    model: 'doubao-seed-2-1-pro-260628',
+  },
 ]
 
 interface Props {
@@ -151,7 +157,7 @@ export function RunPanel({
             <input
               value={config.baseUrl}
               onChange={(e) => update({ baseUrl: e.target.value })}
-              placeholder="https://api.deepseek.com"
+              placeholder="https://api.deepseek.com 或方舟 …/api/v3"
               disabled={running}
             />
           </label>

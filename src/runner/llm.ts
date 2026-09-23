@@ -1,22 +1,40 @@
 import type { LlmConfig } from './config'
 
-/** 与 Vite base（/opentrace/）对齐，本地与 Hub 反代同路径 */
-const PROXY_PATH = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}llm-proxy/v1/chat/completions`
+const PROXY_ROOT = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}llm-proxy`
 
 type ChatMessage = { role: 'system' | 'user' | 'assistant'; content: string }
 
 export type LlmUsage = { prompt_tokens?: number; completion_tokens?: number }
 
+/**
+ * 拼代理后的 chat completions 路径。
+ * - DeepSeek / OpenAI：根域名 → /v1/chat/completions
+ * - 火山方舟：…/api/v3 → /chat/completions（最终 …/api/v3/chat/completions）
+ */
+export function chatCompletionsProxyPath(baseUrl: string): string {
+  try {
+    const path = new URL(baseUrl).pathname.replace(/\/$/, '')
+    if (/\/api\/v\d+$/i.test(path) || /\/v\d+$/i.test(path)) {
+      return `${PROXY_ROOT}/chat/completions`
+    }
+  } catch {
+    /* fall through */
+  }
+  return `${PROXY_ROOT}/v1/chat/completions`
+}
+
 function assertConfig(config: LlmConfig): string {
   const baseUrl = config.baseUrl.trim().replace(/\/$/, '').replace(/\/v1$/i, '')
   if (!baseUrl) {
-    throw new Error('请填写 API 地址，例如 https://api.deepseek.com')
+    throw new Error(
+      '请填写 API 地址，例如 https://api.deepseek.com 或方舟 https://ark.cn-beijing.volces.com/api/v3',
+    )
   }
   if (!config.apiKey.trim()) {
     throw new Error('请填写 API Key（仅存本机浏览器，不会上传到本仓库）')
   }
   if (!config.model.trim()) {
-    throw new Error('请填写 Model，例如 deepseek-chat')
+    throw new Error('请填写 Model，例如 deepseek-chat 或 doubao-seed-2-1-pro-260628')
   }
   try {
     new URL(baseUrl)
@@ -54,7 +72,7 @@ export async function chatCompletion(
 ): Promise<{ text: string; usage?: LlmUsage }> {
   const baseUrl = assertConfig(config)
 
-  const res = await fetch(PROXY_PATH, {
+  const res = await fetch(chatCompletionsProxyPath(baseUrl), {
     method: 'POST',
     signal,
     headers: {
@@ -103,7 +121,7 @@ async function streamOnce(
     body.stream_options = { include_usage: true }
   }
 
-  const res = await fetch(PROXY_PATH, {
+  const res = await fetch(chatCompletionsProxyPath(baseUrl), {
     method: 'POST',
     signal,
     headers: {
