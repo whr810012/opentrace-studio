@@ -1,0 +1,69 @@
+# OpenTrace Studio
+
+开源 Agent / RAG 运行时可视化与调试工作台。  
+面向 2026 上海开源软件应用创新大赛 · 开源 AI 工具赛道（自主选题）。
+
+时间线 · 调用图 · RAG 证据 · 回放；页面内 Live Run 真调 API，Trace 直接写入。
+
+## 功能
+
+- Live Run（DeepSeek / OpenAI 预设）、流式回答、本机会话持久化
+- 时间线 / 调用图 / 瀑布图 / 关键路径、失败诊断、会话统计与 Diff
+- JSONL / OTLP 导入导出，Markdown / HTML / CSV 报告，分享链接
+- 回放倍速与断点、快捷键、`pnpm test` + GitHub CI
+
+## 快速开始
+
+推荐 [pnpm](https://pnpm.io/)（`corepack enable` 后即可用）：
+
+```bash
+pnpm install
+pnpm dev
+```
+
+打开 `http://localhost:5173/opentrace/`：选预设 → 填 Key → 运行。无 Key 时可加载左侧离线 / OTLP 样例。
+
+本仓库 Vite `base` 为 `/opentrace/`，与 [蛋蛋中心](https://dandanhub.vip/toolbox) 反代路径一致。本地开发也请带此前缀访问。
+
+密钥只在当前浏览器标签页（sessionStorage）；会话在 localStorage。
+
+```bash
+pnpm build
+pnpm preview
+pnpm test
+```
+
+产物在 `dist/`。生产 Live Run 走 Cloudflare Pages Function：`/opentrace/llm-proxy/*`。
+
+## 部署到 dandanhub.vip
+
+1. Cloudflare Pages 导入本仓库，Build：`pnpm install && pnpm build`，Output：`dist`
+2. 记下 `https://<project>.pages.dev`
+3. 在 [dandanhub](https://github.com/whr810012/dandanhub) 的 `wrangler.toml` 设置 `OPENTRACE_ORIGIN`（无末尾 `/`）并部署 Hub
+4. 入口：https://dandanhub.vip/toolbox → https://dandanhub.vip/opentrace/
+
+## 文档
+
+- [操作手册](docs/USER-MANUAL.md)
+- [作品介绍](docs/PROJECT-INTRO.md)
+- [对比说明](docs/COMPARISON.md)
+- [架构](docs/ARCHITECTURE.md)
+- [演示脚本](docs/DEMO-SCRIPT.md)
+- [提交清单](docs/SUBMISSION.md)
+- [OTLP 薄桥](docs/OTLP-BRIDGE.md)
+- [路演底稿](docs/PITCH.md)
+- [依赖说明](docs/DEPENDENCY-NOTICE.md)
+- [路线图](docs/ROADMAP.md)
+
+## JSONL 协议
+
+每行一个 JSON：
+
+```json
+{"type":"session","session":{"id":"s1","title":"demo","startedAt":"2026-08-25T00:00:00.000Z","question":"...","answer":"..."}}
+{"type":"span","span":{"sessionId":"s1","id":"a1","name":"llm.answer","kind":"llm","status":"ok","startMs":0,"endMs":100,"input":{},"output":{}}}
+```
+
+## 开源协议
+
+Apache-2.0。见 [LICENSE](LICENSE)、[CONTRIBUTING](CONTRIBUTING.md)、[SECURITY](SECURITY.md)。

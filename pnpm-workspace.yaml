@@ -1,0 +1,4 @@
+# 单包项目；设置见 https://pnpm.io/settings
+nodeLinker: hoisted
+allowBuilds:
+  esbuild: true

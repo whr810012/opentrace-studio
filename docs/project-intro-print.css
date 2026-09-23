@@ -1,0 +1,121 @@
+/* OpenTrace Studio — PROJECT-INTRO print stylesheet */
+@page {
+  size: A4;
+  margin: 18mm 16mm 20mm 16mm;
+}
+
+html {
+  font-size: 11pt;
+}
+
+body {
+  font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: #1a1a1a;
+  line-height: 1.65;
+  max-width: 100%;
+}
+
+h1 {
+  font-size: 1.65rem;
+  font-weight: 700;
+  margin: 0 0 0.8em;
+  padding-bottom: 0.35em;
+  border-bottom: 2px solid #1a1a1a;
+  page-break-after: avoid;
+}
+
+h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 1.4em 0 0.55em;
+  page-break-after: avoid;
+}
+
+h3 {
+  font-size: 1.05rem;
+  font-weight: 650;
+  margin: 1.1em 0 0.4em;
+  page-break-after: avoid;
+}
+
+p, li {
+  margin: 0.35em 0;
+}
+
+ul, ol {
+  padding-left: 1.35em;
+}
+
+strong {
+  font-weight: 650;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid #ccc;
+  margin: 1.2em 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.7em 0 1em;
+  font-size: 0.92em;
+  page-break-inside: avoid;
+}
+
+th, td {
+  border: 1px solid #bbb;
+  padding: 0.35em 0.55em;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: #f3f3f3;
+  font-weight: 650;
+}
+
+pre, code {
+  font-family: "Cascadia Mono", "Consolas", "Sarasa Mono SC", monospace;
+  font-size: 0.85em;
+}
+
+pre {
+  background: #f6f6f6;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 0.75em 0.9em;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  page-break-inside: avoid;
+}
+
+code {
+  background: #f3f3f3;
+  padding: 0.05em 0.28em;
+  border-radius: 3px;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+}
+
+blockquote {
+  margin: 0.8em 0;
+  padding: 0.4em 0.9em;
+  border-left: 3px solid #888;
+  color: #444;
+  background: #fafafa;
+}
+
+a {
+  color: #0b57d0;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+}

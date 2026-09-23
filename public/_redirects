@@ -1,0 +1,7 @@
+# Vite base=/opentrace/：把 /opentrace 映射到站点根产物
+/opentrace /index.html 200
+/opentrace/ /index.html 200
+/opentrace/* /:splat 200
+
+# SPA fallback
+/* /index.html 200

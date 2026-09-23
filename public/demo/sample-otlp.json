@@ -1,0 +1,109 @@
+{
+  "resourceSpans": [
+    {
+      "resource": {
+        "attributes": [
+          { "key": "service.name", "value": { "stringValue": "demo-agent" } }
+        ]
+      },
+      "scopeSpans": [
+        {
+          "scope": { "name": "opentrace-demo" },
+          "spans": [
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "00f067aa0ba902b7",
+              "name": "agent.plan",
+              "kind": 1,
+              "startTimeUnixNano": "1700000000000000000",
+              "endTimeUnixNano": "1700000000120000000",
+              "status": { "code": 1 },
+              "attributes": [
+                {
+                  "key": "user.question",
+                  "value": { "stringValue": "静安寺附近适合带娃的公园？要不要带伞？" }
+                }
+              ]
+            },
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "11a167aa0ba902b8",
+              "parentSpanId": "00f067aa0ba902b7",
+              "name": "llm.plan_steps",
+              "kind": 3,
+              "startTimeUnixNano": "1700000000010000000",
+              "endTimeUnixNano": "1700000000080000000",
+              "status": { "code": 1 },
+              "attributes": [
+                { "key": "gen_ai.system", "value": { "stringValue": "openai" } },
+                { "key": "gen_ai.request.model", "value": { "stringValue": "gpt-4o-mini" } },
+                { "key": "gen_ai.prompt", "value": { "stringValue": "plan tools for local query" } },
+                {
+                  "key": "gen_ai.completion",
+                  "value": { "stringValue": "{\"steps\":[\"retrieve\",\"forecast\",\"answer\"]}" }
+                },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "120" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "40" } }
+              ]
+            },
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "22b267aa0ba902b9",
+              "parentSpanId": "00f067aa0ba902b7",
+              "name": "retriever.local_kb",
+              "kind": 3,
+              "startTimeUnixNano": "1700000000085000000",
+              "endTimeUnixNano": "1700000000095000000",
+              "status": { "code": 1 },
+              "attributes": [
+                { "key": "retrieval.query", "value": { "stringValue": "静安寺 亲子 公园" } },
+                { "key": "output.value", "value": { "stringValue": "hits=2" } },
+                {
+                  "key": "retrieval.documents",
+                  "value": {
+                    "stringValue": "[{\"id\":\"c1\",\"source\":\"kb/jingan-park.md\",\"score\":0.91,\"text\":\"静安公园适合亲子散步\"},{\"id\":\"c2\",\"source\":\"kb/weekend.md\",\"score\":0.84,\"text\":\"周末建议避开早高峰\"}]"
+                  }
+                }
+              ]
+            },
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "33c367aa0ba902ba",
+              "parentSpanId": "00f067aa0ba902b7",
+              "name": "tool.forecast",
+              "kind": 3,
+              "startTimeUnixNano": "1700000000096000000",
+              "endTimeUnixNano": "1700000000110000000",
+              "status": { "code": 2, "message": "Open-Meteo HTTP 503" },
+              "attributes": [
+                { "key": "tool.name", "value": { "stringValue": "open-meteo" } },
+                { "key": "error", "value": { "stringValue": "Open-Meteo HTTP 503" } }
+              ]
+            },
+            {
+              "traceId": "4bf92f3577b34da6a3ce929d0e0e4736",
+              "spanId": "44d467aa0ba902bb",
+              "parentSpanId": "00f067aa0ba902b7",
+              "name": "llm.compose_answer",
+              "kind": 3,
+              "startTimeUnixNano": "1700000000112000000",
+              "endTimeUnixNano": "1700000000180000000",
+              "status": { "code": 1 },
+              "attributes": [
+                { "key": "gen_ai.request.model", "value": { "stringValue": "gpt-4o-mini" } },
+                {
+                  "key": "gen_ai.completion",
+                  "value": {
+                    "stringValue": "推荐静安公园与附近亲子空间；天气工具暂不可用，建议出门前再查预报。"
+                  }
+                },
+                { "key": "gen_ai.usage.input_tokens", "value": { "intValue": "200" } },
+                { "key": "gen_ai.usage.output_tokens", "value": { "intValue": "80" } }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
