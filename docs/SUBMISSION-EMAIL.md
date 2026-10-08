@@ -1,12 +1,12 @@
 # 提交邮件草稿
 
-发至：`bjoscc@oschina.cn`  
-截止：2026-10-31 24:00
+发至：`oscc@oschina.cn`  
+截止：2026-10-11 24:00
 
 ## 标题
 
 ```text
-【赛道一·开源基础软件】OpenTrace Studio 作品提交-<负责人姓名>
+【开源AI工具赛道】OpenTrace Studio 作品提交-<负责人姓名>
 ```
 
 ## 正文
@@ -15,9 +15,8 @@
 您好，提交 OpenTrace Studio 参赛材料。
 
 - 项目：OpenTrace Studio
-- 赛道：赛道一 开源基础软件与解决方案
-- 重点方向：AI 开发工具链与智能体框架
-- 主体：<企业 / 高校实验室 / 科研机构 / 开源社区 / 行业联合体>
+- 赛道：开源 AI 工具（自主选题）
+- 主体：<单位/学校>
 - 负责人：<姓名> / <手机> / <邮箱>
 - 仓库：https://gitee.com/wangdandan810012/opentrace-studio
 - 镜像：https://github.com/whr810012/opentrace-studio
@@ -45,5 +44,5 @@
 - [ ] 仓库无明文 API Key；本地 `.env.local` 勿提交  
 - [ ] PDF 含差异化表述（自托管 + RAG 证据 + Live Run）  
 - [ ] 视频可公开访问；含配置→真跑→证据→失败/Diff→导出  
-- [ ] 报名主体为单位，团队 ≤8 人  
+- [ ] 未绑企业命题  
 - [ ] 邮件标题/正文占位符已替换  

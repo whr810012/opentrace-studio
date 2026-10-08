@@ -1,7 +1,7 @@
 # 演示视频脚本（约 150–180 秒）
 
 1. **开场（10s）**  
-   OpenTrace Studio · 赛道一「开源基础软件」· AI 开发工具链  
+   OpenTrace Studio · 开源 AI 工具（自主选题）  
    像调前端一样调 Agent / RAG。
 
 2. **配置（15s）**  

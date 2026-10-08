@@ -752,7 +752,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <strong>OpenTrace Studio</strong>
-          <span>AI 工具链 · 本地 Trace 工作台</span>
+          <span>开源 AI 工具 · 本地 Trace 工作台</span>
         </div>
         <div className="top-actions">
           <MenuDropdown
