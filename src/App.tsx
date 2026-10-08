@@ -23,6 +23,7 @@ import {
 import { AnswerView } from './components/AnswerView'
 import { CallGraph } from './components/CallGraph'
 import { EvidencePanel } from './components/EvidencePanel'
+import { EvalPanel } from './components/EvalPanel'
 import { MenuDropdown } from './components/MenuDropdown'
 import { PinnedSpans } from './components/PinnedSpans'
 import { ReplayControls } from './components/ReplayControls'
@@ -57,6 +58,7 @@ import { runLiveAgent } from './runner/liveAgent'
 import { loadSessions, saveSessions } from './storage/sessions'
 import { MAX_IMPORT_BYTES, MAX_IMPORT_CHARS, mergeSessionsFront, sanitizeSession } from './storage/sanitize'
 import type { SpanKind, TraceSession, TraceSpan } from './types'
+import { pollOtlpIngestBuffer } from './ingest/otlpPoll'
 import { copyText } from './utils/clipboard'
 
 const ALL_KINDS: SpanKind[] = ['llm', 'tool', 'retriever', 'chain', 'custom']
@@ -100,6 +102,7 @@ export default function App() {
   const [showShortcuts, setShowShortcuts] = useState(false)
   const [errorsOnly, setErrorsOnly] = useState(false)
   const [theme, setTheme] = useState<ThemeMode>(() => readTheme())
+  const [ingestListening, setIngestListening] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const timerRef = useRef<number | null>(null)
   const abortRef = useRef<AbortController | null>(null)
@@ -595,7 +598,7 @@ export default function App() {
   const ingestSessions = (imported: TraceSession[], opts?: { confirmShare?: boolean }) => {
     const cleaned = imported.map(sanitizeSession).filter(Boolean) as TraceSession[]
     if (!cleaned.length) {
-      setRunError('未解析到有效 session，请检查 JSONL 或 OTLP JSON。')
+      setRunError('未解析到有效 session，请检查 JSONL / OTLP / LangGraph / Dify 导出。')
       return
     }
     if (opts?.confirmShare) {
@@ -654,6 +657,27 @@ export default function App() {
       setRunError(friendlyError(e))
     }
   }
+
+  useEffect(() => {
+    if (!ingestListening) return
+    let cancelled = false
+    const tick = async () => {
+      try {
+        const incoming = await pollOtlpIngestBuffer({ drain: true })
+        if (cancelled || !incoming.length) return
+        ingestSessions(incoming)
+        flash(`OTLP ingest · ${incoming.length} session`)
+      } catch {
+        /* dev server may be unavailable */
+      }
+    }
+    void tick()
+    const id = window.setInterval(() => void tick(), 2500)
+    return () => {
+      cancelled = true
+      window.clearInterval(id)
+    }
+  }, [ingestListening, flash])
 
   const exportActive = () => {
     if (!active) return
@@ -728,7 +752,7 @@ export default function App() {
       <header className="topbar">
         <div className="brand">
           <strong>OpenTrace Studio</strong>
-          <span>开源 AI 工具 · 本地 Trace 工作台</span>
+          <span>AI 工具链 · 本地 Trace 工作台</span>
         </div>
         <div className="top-actions">
           <MenuDropdown
@@ -756,7 +780,20 @@ export default function App() {
               onClick={() => fileRef.current?.click()}
             >
               <IconUpload />
-              导入 JSONL / OTLP
+              导入 JSONL / OTLP / 框架
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className={`menu-item ${ingestListening ? 'on' : ''}`}
+              onClick={() => {
+                setIngestListening((v) => !v)
+                flash(!ingestListening ? '已开启本地 OTLP 监听' : '已停止 OTLP 监听')
+              }}
+              title="开发态：轮询 POST /opentrace/v1/traces"
+            >
+              <IconGlobe />
+              {ingestListening ? '停止 OTLP 监听' : '监听本地 OTLP'}
             </button>
             <button
               type="button"
@@ -981,6 +1018,22 @@ export default function App() {
                     <IconDatabase />
                     加载 OTLP 样例
                   </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => void loadDemo(`${import.meta.env.BASE_URL}demo/sample-langgraph.json`)}
+                  >
+                    <IconLayers />
+                    加载 LangGraph 样例
+                  </button>
+                  <button
+                    type="button"
+                    className="btn"
+                    onClick={() => void loadDemo(`${import.meta.env.BASE_URL}demo/sample-dify.json`)}
+                  >
+                    <IconRoute />
+                    加载 Dify 样例
+                  </button>
                 </div>
               </>
             )}
@@ -1153,6 +1206,8 @@ export default function App() {
             forcePair={diffPair}
             onForcePairConsumed={() => setDiffPair(null)}
           />
+
+          <EvalPanel sessions={sessions} onToast={flash} />
         </main>
 
         <aside className="panel">

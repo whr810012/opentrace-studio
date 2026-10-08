@@ -1,5 +1,5 @@
 import type { TraceSession } from '../types'
-import { sanitizeSessions } from './sanitize'
+import { clipSessionForPersist, sanitizeSessions } from './sanitize'
 
 const SESSIONS_KEY = 'opentrace.sessions.v1'
 const ACTIVE_KEY = 'opentrace.activeSessionId'
@@ -20,7 +20,7 @@ export function loadSessions(): { sessions: TraceSession[]; activeId: string | n
 }
 
 export function saveSessions(sessions: TraceSession[], activeId: string | null): boolean {
-  const clipped = sessions.slice(0, MAX_SESSIONS)
+  const clipped = sessions.slice(0, MAX_SESSIONS).map(clipSessionForPersist)
   try {
     localStorage.setItem(SESSIONS_KEY, JSON.stringify(clipped))
     if (activeId) localStorage.setItem(ACTIVE_KEY, activeId)

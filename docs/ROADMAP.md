@@ -1,17 +1,16 @@
 # Roadmap
 
-[2026 上海开源软件应用创新大赛](https://www.oschina.net/os2026/) · 开源 AI 工具 · 自主选题
+[第四届开放原子大赛·2026 开源行业解决方案创新赛](https://www.oschina.net/oa2026/) · 赛道一「开源基础软件与解决方案」· AI 开发工具链与智能体框架
 
 ## 赛期
 
 | 节点 | 日期 |
 |---|---|
-| 作品提交 | — **10 月 11 日 24:00** |
-| 专家评审 | 10 月 12–15 日 |
-| 入围 | 约 10 月 16 日 |
-| 上海总决赛 | **10 月 24 日** |
+| 作品提交 | — **10 月 31 日 24:00** |
+| 入围 | 11 月 6 日 |
+| 北京总决赛 | **11 月 13 日**（亦庄通明湖会议中心，须线下路演） |
 
-材料发 `oscc@oschina.cn`（仓库 + PDF + 视频）。
+材料发 `bjoscc@oschina.cn`（仓库 + PDF + 视频）。
 
 ## v0.1–v0.2（已完成）
 
@@ -24,19 +23,20 @@
 待办（非代码为主）：
 
 - [x] 公开仓库（Gitee）  
-- [ ] 介绍 PDF  
-- [ ] 演示视频  
-- [ ] `pnpm ls` 核对后发邮件  
+- [x] 介绍 PDF（`docs/OpenTrace-Studio-Intro.pdf`，源 `PROJECT-INTRO.md`）  
+- [ ] 演示视频（按 `DEMO-SCRIPT.md` 录制约 3 分钟）  
+- [ ] `pnpm ls` 核对后发邮件（草稿：`SUBMISSION-EMAIL.md`）  
 
-本届不做：万级虚拟列表、LangGraph / Dify 深度 SDK、完整 OTLP Collector、云托管、账号体系。
+本届不做（边界）：完整 OTLP Collector / protobuf、LangGraph·Dify **深度 SDK 注入**、云托管、账号体系。  
+（万级虚拟列表、薄适配器、本地 ingest、评测与插件已在 v0.4 落地。）
 
-## v0.4（赛后）
+## v0.4（功能迭代）
 
-- [ ] 万级 span 渲染  
-- [ ] 完整 OTLP 桥 / 可选本地 ingest  
-- [ ] LangGraph / Dify 适配  
-- [ ] 数据集 + 启发式 / 可选 LLM-as-judge 评测  
-- [ ] 自定义 span 渲染插件  
+- [x] 万级 span 渲染（Timeline 虚拟列表 / Waterfall 窗口 / CallGraph 分层；`MAX_SPANS=50k`）  
+- [x] OTLP 语义加厚 + 可选本地 ingest（Vite middleware，非 Collector）  
+- [x] LangGraph / Dify 离线适配  
+- [x] 数据集 + 启发式 / 可选 LLM-as-judge 评测  
+- [x] 自定义 span 渲染插件（`registerSpanRenderer`）  
 
 ## 维护
 

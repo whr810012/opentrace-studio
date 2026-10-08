@@ -1,0 +1,62 @@
+{
+  "workflow_run_id": "dify-run-001",
+  "workflow_id": "wf-venues",
+  "query": "附近有什么场馆可以打球？",
+  "answer": "推荐球馆 A [1]",
+  "created_at": "2026-10-08T10:00:00.000Z",
+  "nodes": [
+    {
+      "id": "start",
+      "node_type": "start",
+      "title": "开始",
+      "status": "succeeded",
+      "created_at": "2026-10-08T10:00:00.000Z",
+      "elapsed_time": 0.01,
+      "inputs": { "query": "附近有什么场馆可以打球？" }
+    },
+    {
+      "id": "knowledge",
+      "node_type": "knowledge-retrieval",
+      "title": "知识检索",
+      "predecessor_node_id": "start",
+      "status": "succeeded",
+      "created_at": "2026-10-08T10:00:00.100Z",
+      "elapsed_time": 0.35,
+      "inputs": { "query": "场馆" },
+      "outputs": {
+        "result": [
+          {
+            "segment_id": "c1",
+            "content": "球馆 A 周末开放，适合羽毛球。",
+            "score": 0.88,
+            "document_name": "venues.md"
+          }
+        ]
+      }
+    },
+    {
+      "id": "llm",
+      "node_type": "llm",
+      "title": "LLM",
+      "predecessor_node_id": "knowledge",
+      "status": "succeeded",
+      "created_at": "2026-10-08T10:00:00.500Z",
+      "elapsed_time": 1.2,
+      "inputs": { "prompt": "根据检索回答" },
+      "outputs": {
+        "text": "推荐球馆 A [1]",
+        "usage": { "prompt_tokens": 90, "completion_tokens": 30 }
+      }
+    },
+    {
+      "id": "end",
+      "node_type": "end",
+      "title": "结束",
+      "predecessor_node_id": "llm",
+      "status": "succeeded",
+      "created_at": "2026-10-08T10:00:01.800Z",
+      "elapsed_time": 0.01,
+      "outputs": { "answer": "推荐球馆 A [1]" }
+    }
+  ]
+}

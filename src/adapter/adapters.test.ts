@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest'
 import { eventsToSessions, parseJsonl, sessionToJsonl } from '../adapter/jsonl'
 import { sessionToCsv } from '../adapter/csvReport'
 import { looksLikeOtlpJson, otlpJsonToSessions } from '../adapter/otlp-lite'
+import { looksLikeLangGraph, langGraphToSessions } from '../adapter/langgraph'
+import { looksLikeDify, difyToSessions } from '../adapter/dify'
+import { parseImportedSessions } from '../adapter/importTrace'
 import {
   findCriticalPath,
   nextCriticalPathSpanId,
@@ -169,6 +172,70 @@ describe('otlp-lite', () => {
     expect(rag?.kind).toBe('retriever')
     expect(rag?.ragChunks).toHaveLength(2)
     expect(rag?.ragChunks?.[0].id).toBe('d1')
+  })
+})
+
+describe('langgraph / dify adapters', () => {
+  it('converts langgraph runs export', () => {
+    const raw = JSON.stringify({
+      trace_id: 't1',
+      runs: [
+        {
+          id: 'r',
+          name: 'agent',
+          run_type: 'chain',
+          start_time: '2026-01-01T00:00:00.000Z',
+          end_time: '2026-01-01T00:00:01.000Z',
+          inputs: { input: 'hello' },
+        },
+        {
+          id: 'l',
+          parent_run_id: 'r',
+          name: 'llm',
+          run_type: 'llm',
+          start_time: '2026-01-01T00:00:00.200Z',
+          end_time: '2026-01-01T00:00:00.900Z',
+          outputs: { text: 'hi' },
+          usage_metadata: { input_tokens: 3, output_tokens: 2 },
+        },
+      ],
+    })
+    expect(looksLikeLangGraph(raw)).toBe(true)
+    const sessions = langGraphToSessions(raw)
+    expect(sessions[0].spans.length).toBe(2)
+    expect(sessions[0].spans.find((s) => s.kind === 'llm')?.meta?.tokens_in).toBe(3)
+  })
+
+  it('converts dify workflow export', () => {
+    const raw = JSON.stringify({
+      workflow_run_id: 'w1',
+      query: 'q',
+      answer: 'a',
+      nodes: [
+        {
+          id: 'n1',
+          node_type: 'llm',
+          title: 'LLM',
+          status: 'succeeded',
+          created_at: '2026-01-01T00:00:00.000Z',
+          elapsed_time: 0.5,
+          outputs: { text: 'a' },
+        },
+      ],
+    })
+    expect(looksLikeDify(raw)).toBe(true)
+    const sessions = difyToSessions(raw)
+    expect(sessions[0].question).toBe('q')
+    expect(sessions[0].spans[0].kind).toBe('llm')
+  })
+
+  it('routes via parseImportedSessions', () => {
+    const dify = JSON.stringify({
+      workflow_run_id: 'w2',
+      query: 'x',
+      nodes: [{ id: 'a', node_type: 'start', status: 'succeeded', created_at: '2026-01-01T00:00:00.000Z' }],
+    })
+    expect(parseImportedSessions(dify)[0].id).toContain('dify')
   })
 })
 

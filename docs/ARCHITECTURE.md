@@ -42,8 +42,10 @@ flowchart LR
 - JSONL 先跑通接入，再扩框架 SDK  
 - 回放用 `endMs` 过滤未到达节点，不做复杂状态机  
 
-## 扩展
+## 扩展（v0.4 已落地）
 
-- Ingest HTTP / 完整 OTLP  
-- 万级 span 虚拟列表  
-- LangGraph / Dify 等适配器  
+- 本地 OTLP JSON ingest（`vite.otlp-ingest.ts`）  
+- Timeline / Waterfall 虚拟化与 CallGraph 分层  
+- LangGraph / Dify 离线适配、评测面板、span 渲染插件  
+
+仍不做：完整 Collector / protobuf / Metrics / Logs / 账号体系。

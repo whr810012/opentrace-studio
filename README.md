@@ -1,15 +1,16 @@
 # OpenTrace Studio
 
 开源 Agent / RAG 运行时可视化与调试工作台。  
-面向 2026 上海开源软件应用创新大赛 · 开源 AI 工具赛道（自主选题）。
+面向第四届开放原子大赛·2026 开源行业解决方案创新赛 · 赛道一「开源基础软件与解决方案」（AI 开发工具链与智能体框架）。
 
 时间线 · 调用图 · RAG 证据 · 回放；页面内 Live Run 真调 API，Trace 直接写入。
 
 ## 功能
 
-- Live Run（DeepSeek / OpenAI 预设）、流式回答、本机会话持久化
-- 时间线 / 调用图 / 瀑布图 / 关键路径、失败诊断、会话统计与 Diff
-- JSONL / OTLP 导入导出，Markdown / HTML / CSV 报告，分享链接
+- Live Run（DeepSeek / OpenAI / 火山预设）、流式回答、本机会话持久化
+- 时间线（虚拟列表）/ 调用图 / 瀑布图 / 关键路径、失败诊断、会话统计与 Diff
+- JSONL / OTLP / LangGraph / Dify 导入，本地 OTLP ingest，Markdown / HTML / CSV，分享链接
+- Dataset 启发式评测与可选 LLM-as-judge；span 渲染插件
 - 回放倍速与断点、快捷键、`pnpm test` + GitHub CI
 
 ## 快速开始
@@ -50,10 +51,14 @@ pnpm test
 - [架构](docs/ARCHITECTURE.md)
 - [演示脚本](docs/DEMO-SCRIPT.md)
 - [提交清单](docs/SUBMISSION.md)
+- [提交邮件草稿](docs/SUBMISSION-EMAIL.md)
 - [OTLP 薄桥](docs/OTLP-BRIDGE.md)
 - [路演底稿](docs/PITCH.md)
 - [依赖说明](docs/DEPENDENCY-NOTICE.md)
 - [路线图](docs/ROADMAP.md)
+- [Span 插件](docs/PLUGINS.md)
+- [评测](docs/EVAL.md)
+- [框架适配](docs/FRAMEWORK-ADAPTERS.md)
 
 ## JSONL 协议
 

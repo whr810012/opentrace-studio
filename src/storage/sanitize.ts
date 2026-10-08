@@ -1,7 +1,10 @@
 import type { RagChunk, TraceSession, TraceSpan } from '../types'
 
 const MAX_SHARE_RAW_CHARS = 100_000
-const MAX_SPANS = 2_000
+/** In-memory / import observation cap (virtualized views). */
+export const MAX_SPANS = 50_000
+/** Tighten persisted sessions so localStorage stays usable. */
+export const MAX_PERSIST_SPANS = 2_000
 const MAX_TEXT_FIELD = 20_000
 const MAX_JSON_CHARS = 80_000
 const MAX_CHUNKS_PER_SPAN = 50
@@ -104,6 +107,7 @@ export function sanitizeSession(raw: unknown): TraceSession | null {
   if (s.spans.length > MAX_SPANS) return null
 
   const spans = s.spans.map(sanitizeSpan).filter(Boolean) as TraceSpan[]
+  const meta = sanitizeMeta(s.meta)
   return {
     id: clipText(s.id, 200),
     title: typeof s.title === 'string' ? clipText(s.title, 500) : s.id,
@@ -116,6 +120,19 @@ export function sanitizeSession(raw: unknown): TraceSession | null {
       ? s.pinnedSpanIds.filter((x): x is string => typeof x === 'string').slice(0, 100)
       : undefined,
     spans,
+    ...(meta ? { meta } : {}),
+  }
+}
+
+/** Clip spans for localStorage persistence without rejecting large live sessions. */
+export function clipSessionForPersist(session: TraceSession): TraceSession {
+  if (session.spans.length <= MAX_PERSIST_SPANS) return session
+  return {
+    ...session,
+    spans: session.spans.slice(0, MAX_PERSIST_SPANS),
+    note: [session.note, `已截断至 ${MAX_PERSIST_SPANS} spans 以便本机持久化`]
+      .filter(Boolean)
+      .join(' · '),
   }
 }
 

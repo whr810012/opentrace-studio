@@ -426,6 +426,83 @@ button {
   gap: 0.45rem;
 }
 
+.timeline-virtual {
+  max-height: min(52vh, 560px);
+  overflow: auto;
+  position: relative;
+}
+
+.timeline-virtual-inner {
+  position: relative;
+  width: 100%;
+}
+
+.timeline-virtual-row {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: 0.45rem;
+  box-sizing: border-box;
+}
+
+.graph-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.5rem 0.75rem 0;
+}
+
+.waterfall-scroll {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.eval-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.eval-table-wrap {
+  overflow: auto;
+  max-height: 240px;
+}
+
+.eval-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+}
+
+.eval-table th,
+.eval-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.35rem 0.4rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.eval-table .grade-pass td:nth-child(3) {
+  color: var(--ok, #3d9a6a);
+}
+
+.eval-table .grade-warn td:nth-child(3) {
+  color: var(--warn, #c9a227);
+}
+
+.eval-table .grade-fail td:nth-child(3) {
+  color: var(--danger);
+}
+
+.eval-reasons {
+  color: var(--muted);
+  max-width: 28rem;
+}
+
 .span-row {
   display: grid;
   grid-template-columns: 88px 1fr auto;

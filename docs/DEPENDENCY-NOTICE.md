@@ -5,6 +5,7 @@
 | 依赖 | 用途 | 许可证 |
 |---|---|---|
 | react / react-dom | UI | MIT |
+| @tanstack/react-virtual | Timeline 虚拟列表 | MIT |
 | vite | 构建 / 开发服务 | MIT |
 | @vitejs/plugin-react | React 插件 | MIT |
 | typescript | 类型检查 | Apache-2.0 |

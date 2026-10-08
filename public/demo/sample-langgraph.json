@@ -1,0 +1,62 @@
+{
+  "trace_id": "lg-demo-001",
+  "runs": [
+    {
+      "id": "root-1",
+      "name": "agent",
+      "run_type": "chain",
+      "start_time": "2026-10-08T10:00:00.000Z",
+      "end_time": "2026-10-08T10:00:02.500Z",
+      "inputs": { "input": "附近有什么场馆可以打球？" },
+      "outputs": { "output": "推荐球馆 A [1]" },
+      "status": "success"
+    },
+    {
+      "id": "retriever-1",
+      "parent_run_id": "root-1",
+      "name": "retrieve_docs",
+      "run_type": "retriever",
+      "start_time": "2026-10-08T10:00:00.200Z",
+      "end_time": "2026-10-08T10:00:00.600Z",
+      "inputs": { "query": "场馆" },
+      "documents": [
+        {
+          "id": "c1",
+          "page_content": "球馆 A 周末开放，适合羽毛球。",
+          "score": 0.91,
+          "metadata": { "source": "kb/venues.md" }
+        },
+        {
+          "id": "c2",
+          "page_content": "球馆 B 较远。",
+          "score": 0.42,
+          "metadata": { "source": "kb/venues.md" }
+        }
+      ],
+      "status": "success"
+    },
+    {
+      "id": "tool-1",
+      "parent_run_id": "root-1",
+      "name": "geocode",
+      "run_type": "tool",
+      "start_time": "2026-10-08T10:00:00.700Z",
+      "end_time": "2026-10-08T10:00:01.100Z",
+      "inputs": { "place": "上海" },
+      "outputs": { "lat": 31.2, "lon": 121.5 },
+      "status": "success"
+    },
+    {
+      "id": "llm-1",
+      "parent_run_id": "root-1",
+      "name": "ChatOpenAI",
+      "run_type": "llm",
+      "start_time": "2026-10-08T10:00:01.200Z",
+      "end_time": "2026-10-08T10:00:02.400Z",
+      "inputs": { "prompt": "根据证据回答" },
+      "outputs": { "text": "推荐球馆 A [1]" },
+      "usage_metadata": { "input_tokens": 120, "output_tokens": 40 },
+      "status": "success"
+    }
+  ]
+}

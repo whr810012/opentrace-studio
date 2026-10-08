@@ -116,16 +116,24 @@ function otlpTraceToSession(traceId: string, list: OtlpSpan[]): TraceSession {
         : undefined
 
     const meta: Record<string, string | number | boolean> = { source: 'otlp' }
-    if (attrs['gen_ai.request.model'] || attrs['llm.model_name']) {
-      meta.model = attrs['gen_ai.request.model'] || attrs['llm.model_name']
-    }
+    const model =
+      attrs['gen_ai.request.model'] ||
+      attrs['gen_ai.response.model'] ||
+      attrs['llm.model_name'] ||
+      attrs['llm.model']
+    if (model) meta.model = model
     if (attrs['gen_ai.system']) meta.gen_ai_system = attrs['gen_ai.system']
+    if (attrs['gen_ai.operation.name']) meta.gen_ai_op = attrs['gen_ai.operation.name']
+    if (attrs['openinference.span.kind']) meta.openinference_kind = attrs['openinference.span.kind']
+    if (attrs['tool.name']) meta.tool_name = attrs['tool.name']
+    if (attrs['server.address']) meta.server_address = attrs['server.address']
 
     const tokensIn = firstNumber(attrs, [
       'gen_ai.usage.input_tokens',
       'gen_ai.usage.prompt_tokens',
       'llm.token_count.prompt',
       'llm.usage.prompt_tokens',
+      'llm.token_count.total',
     ])
     const tokensOut = firstNumber(attrs, [
       'gen_ai.usage.output_tokens',
@@ -135,6 +143,9 @@ function otlpTraceToSession(traceId: string, list: OtlpSpan[]): TraceSession {
     ])
     if (tokensIn != null) meta.tokens_in = tokensIn
     if (tokensOut != null) meta.tokens_out = tokensOut
+
+    const totalTokens = firstNumber(attrs, ['gen_ai.usage.total_tokens', 'llm.usage.total_tokens'])
+    if (totalTokens != null) meta.tokens_total = totalTokens
 
     const ragChunks = parseRagChunks(attrs)
 
@@ -201,6 +212,12 @@ function attrMap(attrs: OtlpAttr[] | undefined): Record<string, string> {
 }
 
 function inferKind(name: string, attrs: Record<string, string>): SpanKind {
+  const oi = (attrs['openinference.span.kind'] || attrs['gen_ai.operation.name'] || '').toLowerCase()
+  if (oi === 'retriever' || oi === 'embedding' || oi === 'reranker') return 'retriever'
+  if (oi === 'llm' || oi === 'chat' || oi === 'completion') return 'llm'
+  if (oi === 'tool' || oi === 'agent') return oi === 'agent' ? 'chain' : 'tool'
+  if (oi === 'chain' || oi === 'workflow') return 'chain'
+
   const blob = `${name} ${Object.keys(attrs).join(' ')} ${Object.values(attrs).join(' ')}`.toLowerCase()
   if (/retriev|rag|vector|embed|knowledge/.test(blob)) return 'retriever'
   if (/gen_ai|openai|chat\.completions|llm|completion|prompt/.test(blob)) return 'llm'
@@ -220,28 +237,58 @@ function pickIo(attrs: Record<string, string>, side: 'input' | 'output'): unknow
     side === 'input'
       ? [
           'gen_ai.prompt',
+          'gen_ai.input.messages',
           'llm.input_messages',
+          'llm.prompts',
           'input.value',
+          'input',
           'http.request.body',
           'tool.arguments',
+          'tool.parameters',
           'retrieval.query',
+          'openinference.span.kind',
         ]
       : [
           'gen_ai.completion',
+          'gen_ai.output.messages',
+          'gen_ai.response.text',
           'llm.output_messages',
+          'llm.completions',
           'output.value',
+          'output',
           'http.response.body',
           'tool.result',
+          'tool.output',
         ]
   for (const k of keys) {
-    if (attrs[k]) return attrs[k]
+    if (attrs[k] && k !== 'openinference.span.kind') return tryParseJson(attrs[k])
   }
+  // OpenInference message arrays: llm.input_messages.0.message.content
+  const msgPrefix = side === 'input' ? 'llm.input_messages.' : 'llm.output_messages.'
+  const msgs: string[] = []
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k.includes('.message.content') && k.startsWith(msgPrefix)) msgs.push(v)
+  }
+  if (msgs.length) return msgs.length === 1 ? msgs[0] : msgs
+
   const prefix = side === 'input' ? 'input.' : 'output.'
   const picked: Record<string, string> = {}
   for (const [k, v] of Object.entries(attrs)) {
     if (k.startsWith(prefix) || k.startsWith(`gen_ai.${side}`)) picked[k] = v
   }
   return Object.keys(picked).length ? picked : undefined
+}
+
+function tryParseJson(s: string): unknown {
+  const t = s.trim()
+  if ((t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))) {
+    try {
+      return JSON.parse(t)
+    } catch {
+      return s
+    }
+  }
+  return s
 }
 
 function firstNumber(attrs: Record<string, string>, keys: string[]): number | null {
@@ -259,8 +306,39 @@ function parseRagChunks(attrs: Record<string, string>): TraceSpan['ragChunks'] {
     attrs['retrieval.documents'] ||
     attrs['retrieval.docs'] ||
     attrs['rag.chunks'] ||
-    attrs['documents']
-  if (!raw) return undefined
+    attrs['documents'] ||
+    attrs['db.collection.documents'] ||
+    attrs['gen_ai.retrieval.documents']
+  if (!raw) {
+    // OpenInference indexed document attributes
+    const indexed: NonNullable<TraceSpan['ragChunks']> = []
+    for (let i = 0; i < 50; i += 1) {
+      const text =
+        attrs[`retrieval.documents.${i}.document.content`] ||
+        attrs[`document.${i}.content`] ||
+        attrs[`gen_ai.retrieval.document.${i}.content`]
+      if (!text) {
+        if (i > 0 && !attrs[`retrieval.documents.${i}.document.content`]) break
+        continue
+      }
+      const score = Number(
+        attrs[`retrieval.documents.${i}.document.score`] ||
+          attrs[`document.${i}.score`] ||
+          attrs[`retrieval.score_${i}`] ||
+          0,
+      )
+      indexed.push({
+        id: attrs[`retrieval.documents.${i}.document.id`] || `doc-${i + 1}`,
+        source:
+          attrs[`retrieval.documents.${i}.document.metadata.source`] ||
+          attrs[`document.${i}.metadata.source`] ||
+          `doc-${i + 1}`,
+        score: Number.isFinite(score) ? score : 0,
+        text,
+      })
+    }
+    return indexed.length ? indexed : undefined
+  }
   try {
     const parsed = JSON.parse(raw) as unknown
     if (!Array.isArray(parsed)) return undefined
@@ -271,15 +349,25 @@ function parseRagChunks(attrs: Record<string, string>): TraceSpan['ragChunks'] {
         }
         if (!item || typeof item !== 'object') return null
         const o = item as Record<string, unknown>
-        const text = String(o.text ?? o.content ?? o.document ?? '')
+        const nested =
+          o.document && typeof o.document === 'object'
+            ? (o.document as Record<string, unknown>)
+            : o
+        const text = String(nested.text ?? nested.content ?? nested.document ?? o.content ?? '')
         if (!text) return null
-        const score = Number(o.score ?? o.relevance_score ?? attrs[`retrieval.score_${i}`] ?? 0)
+        const score = Number(
+          nested.score ?? o.score ?? o.relevance_score ?? attrs[`retrieval.score_${i}`] ?? 0,
+        )
         return {
-          id: String(o.id ?? `doc-${i + 1}`),
-          source: String(o.source ?? o.filename ?? `doc-${i + 1}`),
+          id: String(nested.id ?? o.id ?? `doc-${i + 1}`),
+          source: String(nested.source ?? nested.filename ?? o.source ?? `doc-${i + 1}`),
           score: Number.isFinite(score) ? score : 0,
           text,
-          ...(typeof o.url === 'string' ? { url: o.url } : {}),
+          ...(typeof nested.url === 'string'
+            ? { url: nested.url }
+            : typeof o.url === 'string'
+              ? { url: o.url }
+              : {}),
         }
       })
       .filter((c): c is NonNullable<typeof c> => Boolean(c))

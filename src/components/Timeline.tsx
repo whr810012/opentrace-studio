@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { sessionDuration } from '../adapter/jsonl'
 import { computeSessionStats } from '../analytics/sessionStats'
+import { getSpanRenderer } from '../plugins/spanRenderers'
 import type { TraceSession, TraceSpan, SpanKind, SpanStatus } from '../types'
 import {
   IconAlert,
@@ -27,6 +29,8 @@ const STATUS_ICON = {
   running: IconLoader,
 } as const
 
+const ROW_ESTIMATE = 56
+
 interface Props {
   session: TraceSession
   selectedId: string | null
@@ -50,6 +54,7 @@ export function Timeline({
 }: Props) {
   const [query, setQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const parentRef = useRef<HTMLDivElement>(null)
   const total = sessionDuration(session) || 1
   const stats = useMemo(() => computeSessionStats(session), [session])
   const ordered = useMemo(
@@ -62,23 +67,34 @@ export function Timeline({
     [session.spans],
   )
 
-  const errorCount = session.spans.filter((s) => s.status === 'error').length
+  const errorCount = useMemo(
+    () => session.spans.reduce((n, s) => n + (s.status === 'error' ? 1 : 0), 0),
+    [session.spans],
+  )
   const q = query.trim().toLowerCase()
+
+  const visible = useMemo(() => {
+    return session.spans.filter((s) => {
+      if (!kindFilter.has(s.kind)) return false
+      if (statusFilter !== 'all' && s.status !== statusFilter) return false
+      if (q && !`${s.name} ${s.kind} ${s.error ?? ''}`.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [session.spans, kindFilter, statusFilter, q])
+
+  const virtualizer = useVirtualizer({
+    count: visible.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => ROW_ESTIMATE,
+    overscan: 12,
+  })
 
   useEffect(() => {
     if (!selectedId) return
-    const el = document.querySelector(`[data-span-id="${CSS.escape(selectedId)}"]`)
-    el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-  }, [selectedId])
+    const index = visible.findIndex((s) => s.id === selectedId)
+    if (index >= 0) virtualizer.scrollToIndex(index, { align: 'auto' })
+  }, [selectedId, visible, virtualizer])
 
-  const visible = session.spans.filter((s) => {
-    if (!kindFilter.has(s.kind)) return false
-    if (statusFilter !== 'all' && s.status !== statusFilter) return false
-    if (q && !`${s.name} ${s.kind} ${s.error ?? ''}`.toLowerCase().includes(q)) return false
-    return true
-  })
-
-  // replayIndex is indexed into App's full orderedSpans — not the filtered list.
   const replayCutoff =
     replayIndex === null
       ? null
@@ -132,25 +148,45 @@ export function Timeline({
         <span className="chip" title={`慢 span 阈值 ≥ ${stats.slowThresholdMs}ms`}>
           慢 ≥ {stats.slowThresholdMs}ms
         </span>
+        <span className="chip" title="虚拟列表">
+          {visible.length.toLocaleString()} / {session.spans.length.toLocaleString()}
+        </span>
       </div>
-      <div className="timeline">
-        {visible.map((span) => {
-          const dur = span.endMs - span.startMs
-          return (
-            <SpanRow
-              key={span.id}
-              span={span}
-              total={total}
-              selected={selectedId === span.id}
-              dimmed={replayCutoff !== null && span.endMs > replayCutoff}
-              slow={dur >= stats.slowThresholdMs && span.status !== 'error'}
-              pinned={pinnedIds?.has(span.id) ?? false}
-              onSelect={onSelect}
-              onTogglePin={onTogglePin}
-            />
-          )
-        })}
-        {!visible.length && <p className="empty">当前筛选下无 span。</p>}
+      <div className="timeline timeline-virtual" ref={parentRef}>
+        {!visible.length ? (
+          <p className="empty">当前筛选下无 span。</p>
+        ) : (
+          <div
+            className="timeline-virtual-inner"
+            style={{ height: `${virtualizer.getTotalSize()}px` }}
+          >
+            {virtualizer.getVirtualItems().map((row) => {
+              const span = visible[row.index]!
+              const dur = span.endMs - span.startMs
+              return (
+                <div
+                  key={span.id}
+                  className="timeline-virtual-row"
+                  style={{
+                    height: `${row.size}px`,
+                    transform: `translateY(${row.start}px)`,
+                  }}
+                >
+                  <SpanRow
+                    span={span}
+                    total={total}
+                    selected={selectedId === span.id}
+                    dimmed={replayCutoff !== null && span.endMs > replayCutoff}
+                    slow={dur >= stats.slowThresholdMs && span.status !== 'error'}
+                    pinned={pinnedIds?.has(span.id) ?? false}
+                    onSelect={onSelect}
+                    onTogglePin={onTogglePin}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -195,7 +231,11 @@ function SpanRow({
       </div>
       <div className="span-main">
         <strong>
-          {pinned ? <span className="pin-mark" title="已钉选"><IconPin /> </span> : null}
+          {pinned ? (
+            <span className="pin-mark" title="已钉选">
+              <IconPin />{' '}
+            </span>
+          ) : null}
           {span.name}
           {slow ? <span className="slow-tag">慢</span> : null}
         </strong>
@@ -207,15 +247,7 @@ function SpanRow({
         </div>
       </div>
       <div className="span-trailing">
-        {span.kind === 'llm' &&
-          (Number(span.meta?.tokens_in) > 0 || Number(span.meta?.tokens_out) > 0) && (
-            <span
-              className="token-chip"
-              title={`tokens in ${span.meta?.tokens_in ?? 0} / out ${span.meta?.tokens_out ?? 0}`}
-            >
-              ↑{String(span.meta?.tokens_in ?? 0)} ↓{String(span.meta?.tokens_out ?? 0)}
-            </span>
-          )}
+        {getSpanRenderer(span).renderTimelineChip?.(span)}
         {onTogglePin && (
           <button
             type="button"

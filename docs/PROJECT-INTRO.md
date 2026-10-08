@@ -2,11 +2,11 @@
 
 | 项 | 内容 |
 |---|---|
-| 赛道 | 开源 AI 工具（**自主选题**，未绑定企业命题） |
+| 赛道 | 赛道一「开源基础软件与解决方案」· 重点方向「AI 开发工具链与智能体框架」 |
 | 项目 | OpenTrace Studio — Agent / RAG 可观测与交互调试工作台 |
 | 协议 | Apache-2.0 |
-| 仓库 | https://gitee.com/wangdandan810012/opentrace-studio |
-| 复现 | `pnpm install && pnpm dev` → http://localhost:5173 |
+| 仓库 | https://gitee.com/wangdandan810012/opentrace-studio （镜像：https://github.com/whr810012/opentrace-studio） |
+| 复现 | `pnpm install && pnpm dev` → http://localhost:5173/opentrace/ |
 
 **一句话定位：** 把多步骤 Agent / RAG 从黑盒变成可点选、可核对证据、可回放、可本机部署的开源调试工作台——**不替代** LangSmith / Langfuse 等生产观测平台，**补齐**轻量本机 DevTools + 页内 Live Run + RAG 证据链。
 
@@ -44,7 +44,7 @@
 3. **薄协议**：JSONL 为主，OTLP JSON 子集薄导入，便于交换与二次接入  
 4. **RAG 证据挂在 span 上**，并提供质检快照，核对「检索—引用—回答」是否一致  
 
-选题说明：2026 上海开源软件应用创新大赛 · 开源 AI 工具赛道 · **自主选题**。
+选题说明：第四届开放原子大赛·2026 开源行业解决方案创新赛 · 赛道一「开源基础软件与解决方案」· 重点方向「AI 开发工具链与智能体框架」。
 
 ---
 
@@ -206,7 +206,8 @@ pnpm dev
 | 阶段 | 内容 |
 |---|---|
 | 赛期已完成 | 四视图、Live Run、失败诊断、Diff、OTLP 薄导入、瀑布与关键路径、报告导出、主题、流式 usage、RAG 质检快照、单测与 CI |
-| 赛后规划 | 万级 span、完整 OTLP 桥、框架适配器、数据集与可选评测 |
+| v0.4 增强 | 万级 span 虚拟化、本地 OTLP ingest、LangGraph/Dify 离线适配、Dataset 启发式评测与可选 LLM-as-judge、span 渲染插件 |
+| 后续规划 | 完整 Collector / protobuf、深度 SDK 注入、云托管与账号体系（本届明确不做） |
 
 | 评审维度 | 本项目对应 |
 |---|---|
@@ -219,7 +220,8 @@ pnpm dev
 
 ## 附录：导出 PDF 建议配图
 
-> 非强制；建议 2～4 张，**Key 务必打码**。
+> 非强制；建议 2～4 张，**Key 务必打码**。  
+> 仓库内已提供由本文导出的 [`OpenTrace-Studio-Intro.pdf`](./OpenTrace-Studio-Intro.pdf)（`npx md-to-pdf docs/PROJECT-INTRO.md --config-file docs/md-to-pdf.config.mjs`）。若需配图，可另做带截图的补充页。
 
 1. 工作台总览（Live Run + 中栏多视图）  
 2. 时间线或瀑布图（含关键路径 / token 线索）  
@@ -228,4 +230,4 @@ pnpm dev
 
 ---
 
-**声明：** 本作品为原创开源项目；第三方依赖按其许可证使用。自主选题，未绑定企业赛题。
+**声明：** 本作品为原创开源项目；第三方依赖按其许可证使用。申报赛道一「开源基础软件与解决方案」，重点方向为 AI 开发工具链与智能体框架。

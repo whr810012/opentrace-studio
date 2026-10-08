@@ -36,6 +36,8 @@ export interface TraceSession {
   note?: string
   pinnedSpanIds?: string[]
   spans: TraceSpan[]
+  /** Optional session-level meta (eval scores, ingest source, …). */
+  meta?: Record<string, string | number | boolean>
 }
 
 export interface TraceEvent {

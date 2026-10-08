@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { diagnoseSpanError } from '../runner/errors'
+import { getSpanRenderer } from '../plugins/spanRenderers'
 import type { TraceSpan } from '../types'
 import { IconCopy } from './UiIcons'
 
@@ -19,6 +20,8 @@ export function EvidencePanel({ span, highlightChunkId, onCopySpan }: Props) {
       highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
     }
   }, [highlightChunkId, span?.id])
+
+  const detail = span ? getSpanRenderer(span).renderDetail?.(span) : null
 
   return (
     <div className="panel-body">
@@ -56,16 +59,7 @@ export function EvidencePanel({ span, highlightChunkId, onCopySpan }: Props) {
             </div>
           )}
 
-          {span.kind === 'llm' ? (
-            <LlmIoView span={span} />
-          ) : (
-            <>
-              <h3 className="detail-h">INPUT</h3>
-              <pre className="detail-pre">{stringify(span.input)}</pre>
-              <h3 className="detail-h">OUTPUT</h3>
-              <pre className="detail-pre">{stringify(span.output)}</pre>
-            </>
-          )}
+          {detail}
 
           <h3 className="detail-h">RAG EVIDENCE ({chunks.length})</h3>
           {chunks.length === 0 ? (
@@ -97,47 +91,4 @@ export function EvidencePanel({ span, highlightChunkId, onCopySpan }: Props) {
       )}
     </div>
   )
-}
-
-function LlmIoView({ span }: { span: TraceSpan }) {
-  const prompt = extractText(span.input, ['prompt', 'text', 'content', 'task', 'model'])
-  const completion = extractText(span.output, ['text', 'raw', 'completion', 'content'])
-
-  return (
-    <div className="llm-io">
-      <div className="llm-meta">
-        {span.meta?.tokens_in != null && <span>in {String(span.meta.tokens_in)}</span>}
-        {span.meta?.tokens_out != null && <span>out {String(span.meta.tokens_out)}</span>}
-        {span.meta?.streamed != null && <span>{span.meta.streamed ? 'stream' : 'sync'}</span>}
-      </div>
-      <h3 className="detail-h">PROMPT / INPUT</h3>
-      <pre className="detail-pre llm-pre">{prompt || stringify(span.input)}</pre>
-      <h3 className="detail-h">COMPLETION / OUTPUT</h3>
-      <pre className="detail-pre llm-pre">{completion || stringify(span.output)}</pre>
-      <details className="raw-details">
-        <summary>原始 JSON</summary>
-        <pre className="detail-pre">{stringify({ input: span.input, output: span.output })}</pre>
-      </details>
-    </div>
-  )
-}
-
-function extractText(value: unknown, keys: string[]): string | null {
-  if (typeof value === 'string') return value
-  if (!value || typeof value !== 'object') return null
-  const obj = value as Record<string, unknown>
-  for (const k of keys) {
-    const v = obj[k]
-    if (typeof v === 'string' && v.trim()) return v
-  }
-  return null
-}
-
-function stringify(value: unknown) {
-  if (value === undefined) return '—'
-  try {
-    return JSON.stringify(value, null, 2)
-  } catch {
-    return String(value)
-  }
 }

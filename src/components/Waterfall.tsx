@@ -1,6 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { sessionDuration } from '../adapter/jsonl'
 import { criticalPathDuration, findCriticalPath } from '../analytics/criticalPath'
+import { resolveSpanColor } from '../plugins/spanRenderers'
 import type { TraceSession, TraceSpan } from '../types'
 
 interface Props {
@@ -17,6 +18,9 @@ const KIND_COLOR: Record<string, string> = {
   custom: 'var(--muted)',
 }
 
+const ROW_H = 22
+const VIEWPORT_H = 360
+
 export function Waterfall({ session, selectedId, onSelect }: Props) {
   const total = sessionDuration(session) || 1
   const crit = useMemo(() => findCriticalPath(session.spans), [session.spans])
@@ -28,6 +32,8 @@ export function Waterfall({ session, selectedId, onSelect }: Props) {
     () => [...session.spans].sort((a, b) => a.startMs - b.startMs || a.name.localeCompare(b.name)),
     [session.spans],
   )
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  const [scrollTop, setScrollTop] = useState(0)
 
   if (!rows.length) {
     return (
@@ -37,48 +43,61 @@ export function Waterfall({ session, selectedId, onSelect }: Props) {
     )
   }
 
-  const rowH = 22
   const labelW = 150
   const chartW = 520
-  const height = rows.length * rowH + 28
   const width = labelW + chartW + 16
+  const fullHeight = rows.length * ROW_H + 28
+  const start = Math.max(0, Math.floor(scrollTop / ROW_H) - 4)
+  const visibleCount = Math.ceil(VIEWPORT_H / ROW_H) + 8
+  const end = Math.min(rows.length, start + visibleCount)
+  const slice = rows.slice(start, end)
 
   return (
     <div className="panel-body waterfall-wrap">
       <p className="hint" style={{ marginTop: 0 }}>
-        瀑布图 · 高亮为关键路径（{crit.size} spans · {critMs}ms）· 总时长 {total}ms
+        瀑布图 · 高亮为关键路径（{crit.size} spans · {critMs}ms）· 总时长 {total}ms ·{' '}
+        {rows.length.toLocaleString()} rows
       </p>
-      <svg
-        className="waterfall-svg"
-        viewBox={`0 0 ${width} ${height}`}
-        role="img"
-        aria-label="Span 瀑布图"
+      <div
+        className="waterfall-scroll"
+        ref={scrollerRef}
+        style={{ height: Math.min(VIEWPORT_H, fullHeight), overflow: 'auto' }}
+        onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
       >
-        {[0, 0.25, 0.5, 0.75, 1].map((t) => {
-          const x = labelW + t * chartW
-          return (
-            <g key={t}>
-              <line x1={x} y1={18} x2={x} y2={height} className="wf-grid" />
-              <text x={x} y={12} className="wf-axis" textAnchor="middle">
-                {Math.round(total * t)}ms
-              </text>
-            </g>
-          )
-        })}
-        {rows.map((span, i) => (
-          <WaterfallRow
-            key={span.id}
-            span={span}
-            y={22 + i * rowH}
-            labelW={labelW}
-            chartW={chartW}
-            total={total}
-            selected={selectedId === span.id}
-            onCritical={crit.has(span.id)}
-            onSelect={onSelect}
-          />
-        ))}
-      </svg>
+        <svg
+          className="waterfall-svg"
+          width={width}
+          height={fullHeight}
+          viewBox={`0 0 ${width} ${fullHeight}`}
+          role="img"
+          aria-label="Span 瀑布图"
+        >
+          {[0, 0.25, 0.5, 0.75, 1].map((t) => {
+            const x = labelW + t * chartW
+            return (
+              <g key={t}>
+                <line x1={x} y1={18} x2={x} y2={fullHeight} className="wf-grid" />
+                <text x={x} y={12} className="wf-axis" textAnchor="middle">
+                  {Math.round(total * t)}ms
+                </text>
+              </g>
+            )
+          })}
+          {slice.map((span, i) => (
+            <WaterfallRow
+              key={span.id}
+              span={span}
+              y={22 + (start + i) * ROW_H}
+              labelW={labelW}
+              chartW={chartW}
+              total={total}
+              selected={selectedId === span.id}
+              onCritical={crit.has(span.id)}
+              onSelect={onSelect}
+            />
+          ))}
+        </svg>
+      </div>
     </div>
   )
 }
@@ -104,7 +123,8 @@ function WaterfallRow({
 }) {
   const x = labelW + (span.startMs / total) * chartW
   const w = Math.max(((span.endMs - span.startMs) / total) * chartW, 3)
-  const fill = span.status === 'error' ? 'var(--danger)' : KIND_COLOR[span.kind] || KIND_COLOR.custom
+  const fill =
+    span.status === 'error' ? 'var(--danger)' : resolveSpanColor(span, KIND_COLOR)
 
   return (
     <g
